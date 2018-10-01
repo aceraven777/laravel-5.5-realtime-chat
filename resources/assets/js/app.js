@@ -16,7 +16,7 @@ window.alertify = require('./alertify');
  * or customize the JavaScript scaffolding to fit your unique needs.
  */
 
-Vue.component('example', require('./components/Example.vue'));
+Vue.component('chatbox', require('./components/Chatbox.vue'));
 
 const app = new Vue({
     el: '#app'

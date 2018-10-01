@@ -9,16 +9,16 @@ use Illuminate\Support\Facades\Auth;
 class UserController extends Controller
 {
 	/**
-	 * List users
+	 * List of users
 	 * 
-	 * @param  Request $request [description]
-	 * @return View
+	 * @param  Request $request
+	 * @return \Illuminate\View\View
 	 */
     public function index(Request $request)
     {
-    	$current_user = Auth::user();
+    	$currentUser = Auth::user();
 
-    	$users = User::where('id', '!=', $current_user->id)
+    	$users = User::where('id', '!=', $currentUser->id)
     		->orderBy('name')
     		->paginate(50);
 

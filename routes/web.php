@@ -31,6 +31,8 @@ Route::group(['middleware' => ['auth']], function () {
 	Route::get('/', 'HomeController@index')->name('home');
 
 	Route::get('users', 'UserController@index')->name('users.index');
-	Route::get('users/{to_user_id}/messages', 'MessageController@chatMessages')->name('users.chat-messages');
-	Route::post('users/{to_user_id}/messages', 'MessageController@chatUser')->name('users.chat-user');
+	Route::get('users/{to_user}/messages', 'MessageController@index')->name('users.chat-messages');
+	
+	Route::get('api/messages/{toUser}', 'Api\MessageController@index')->name('api.users.chat-messages');
+	Route::post('api/users/{toUser}/messages', 'Api\MessageController@chatUser')->name('api.users.chat-user');
 });
