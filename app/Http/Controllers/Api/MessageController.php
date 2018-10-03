@@ -64,7 +64,7 @@ class MessageController extends Controller
         $currentUser = Auth::user();
 
         if ($currentUser->id == $toUser->id) {
-            return redirect('/');
+            return ['status' => false, 'message' => 'You cannot send a message to yourself.'];
         }
 
         $message = Message::create([
@@ -73,7 +73,7 @@ class MessageController extends Controller
             'text' => $request->input('text'),
         ]);
 
-        event(new ChatSent($message));
+        broadcast(new ChatSent($message));
 
         return ['status' => true, 'message' => $message];
     }

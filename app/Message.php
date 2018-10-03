@@ -32,7 +32,7 @@ class Message extends Model
     }
 
     public function toUser()
-    {   
+    {
         return $this->belongsTo('App\User', 'to_user_id');
     }
 }
