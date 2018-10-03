@@ -14,8 +14,3 @@
 Broadcast::channel('App.Message.{from_user_id}.{to_user_id}', function ($user, $from_user_id, $to_user_id) {
     return (int) $user->id === (int) $from_user_id || (int) $user->id === (int) $to_user_id;
 });
-
-Broadcast::channel('App.User.{user_id}', function ($user, $user_id) {
-    return true;
-    return (int) $user->id === (int) $from_user_id || (int) $user->id === (int) $to_user_id;
-});

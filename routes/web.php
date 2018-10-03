@@ -13,20 +13,6 @@
 
 Auth::routes();
 
-// Route::get('event', function() {
-// 	$user = new App\User([
-// 		'name' => 'Yamite',
-// 		'email' => 'yamite@gmail.com',
-// 		'password' => bcrypt('123456'),
-// 	]);
-
-// 	$user->save();
-
-// 	event(new App\Events\UserRegistered($user));
-
-// 	return 'Done';
-// });
-
 Route::group(['middleware' => ['auth']], function () {
 	Route::get('/', 'HomeController@index')->name('home');
 

@@ -16,14 +16,3 @@
 </div>
 @endsection
 
-@section('scripts')
-@parent
-
-<script type="text/javascript">
-    Echo.private('App.User.1')
-        .listen('UserRegistered', (e) => {
-            console.log(e);
-            // console.log(e.order.name);
-        });
-</script>
-@endsection
