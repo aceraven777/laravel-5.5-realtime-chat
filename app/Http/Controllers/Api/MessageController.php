@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\User;
 use App\Message;
-use App\Events\ChatSent;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -23,7 +22,7 @@ class MessageController extends Controller
         $currentUser = Auth::user();
 
         if ($currentUser->id == $toUser->id) {
-            return redirect('/');
+            return response('Forbidden Access.', 403);
         }
 
         $query = Message::with('fromUser')
@@ -72,8 +71,6 @@ class MessageController extends Controller
             'to_user_id' => $toUser->id,
             'text' => $request->input('text'),
         ]);
-
-        broadcast(new ChatSent($message));
 
         return ['status' => true, 'message' => $message];
     }

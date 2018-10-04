@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Events\ChatSent;
 
 class SendMessageTest extends TestCase
 {
@@ -39,5 +39,20 @@ class SendMessageTest extends TestCase
 
         $this->post("api/users/{$toUser->id}/messages")
             ->assertSessionHasErrors('text');
+    }
+
+    /** @test */
+    public function authenticated_user_can_send_message()
+    {
+        $this->expectsEvents(ChatSent::class);
+
+        $this->signIn();
+
+        $toUser = create('App\User');
+        $text = 'This is a sample message.';
+
+        $this->post("api/users/{$toUser->id}/messages", ['text' => $text]);
+
+        $this->assertDatabaseHas('messages', ['text' => $text]);
     }
 }

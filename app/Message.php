@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Events\ChatSent;
 use Illuminate\Database\Eloquent\Model;
 
 class Message extends Model
@@ -18,13 +19,17 @@ class Message extends Model
     public $timestamps = false;
 
     public static function boot()
-	{
-		parent::boot();
+    {
+        parent::boot();
 
-		static::creating(function($model) {
-			$model->setCreatedAt($model->freshTimestamp());
-		});
-	}
+        static::creating(function($model) {
+            $model->setCreatedAt($model->freshTimestamp());
+        });
+
+        static::created(function($model) {
+            broadcast(new ChatSent($model));
+        });
+    }
 
     public function fromUser()
     {
