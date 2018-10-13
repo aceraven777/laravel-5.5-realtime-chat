@@ -14,7 +14,7 @@ class SendMessageTest extends TestCase
 
         $toUser = create('App\User');
 
-        $this->post("api/users/{$toUser->id}/messages")
+        $this->post(route('api.users.chat-user', $toUser))
             ->assertRedirect('/login');
     }
 
@@ -25,7 +25,11 @@ class SendMessageTest extends TestCase
 
         $toUser = auth()->user();
 
-        $this->post("api/users/{$toUser->id}/messages", ['text' => 'This is a sample message.'])
+        $this->post(route('api.users.chat-user', $toUser),
+                [
+                    'text' => 'This is a sample message.'
+                ]
+            )
             ->assertJson(['status' => false]);
     }
 
@@ -37,7 +41,7 @@ class SendMessageTest extends TestCase
 
         $toUser = create('App\User');
 
-        $this->post("api/users/{$toUser->id}/messages")
+        $this->post(route('api.users.chat-user', $toUser))
             ->assertSessionHasErrors('text');
     }
 
@@ -51,7 +55,7 @@ class SendMessageTest extends TestCase
         $toUser = create('App\User');
         $text = 'This is a sample message.';
 
-        $this->post("api/users/{$toUser->id}/messages", ['text' => $text]);
+        $this->post(route('api.users.chat-user', $toUser), ['text' => $text]);
 
         $this->assertDatabaseHas('messages', ['text' => $text]);
     }
