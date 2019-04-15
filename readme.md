@@ -1,5 +1,7 @@
 # Realtime Chat using Laravel 5.5, Pusher and Echo
 
+[![Build Status](https://travis-ci.org/aceraven777/laravel-5.5-realtime-chat.svg?branch=master)](https://travis-ci.org/aceraven777/laravel-5.5-realtime-chat)
+
 Realtime chat system using Laravel, Pusher and Echo. The system allows chatting between 2 signed-in users.
 
 ## Donate
