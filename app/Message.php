@@ -3,6 +3,7 @@
 namespace App;
 
 use App\Events\ChatSent;
+use Carbon\Carbon as Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class Message extends Model
@@ -29,6 +30,11 @@ class Message extends Model
         static::created(function($model) {
             broadcast(new ChatSent($model));
         });
+    }
+
+    public function getCreatedAtAttribute($value)
+    {
+        return Carbon::parse($value)->toATOMString();
     }
 
     public function fromUser()

@@ -1,27 +1,58 @@
 <template>
     <div class="panel panel-default">
-        <div class="panel-heading" v-text="toUser.name"></div>
+        <div class="panel-heading"><h4 v-text="toUser.name"></h4></div>
 
-            <div class="panel-body">
-                <div class='chat-messages'>
-                    <div v-for="message in messages" v-bind:id="'message-'+message.id" class='single-message'>
-                        <h5 v-text="message.from_user.name"></h5>
+        <div class="panel-body">
+            <ul class="chat">
+                <li v-for="message in messages" v-bind:id="'message-'+message.id" class="clearfix" :class="isMessageMine(message) ? 'right' : 'left'">
+                    <span class="chat-img" :class="isMessageMine(message) ? 'pull-right' : 'pull-left'">
+                        <img src="http://placehold.it/50/FA6F57/fff&text=ME" alt="User Avatar" class="img-circle" />
+                    </span>
+                    
+                    <div class="chat-body clearfix">
+                        <div class="header" v-if="isMessageMine(message)">
+                            <small class="text-muted">
+                                <span class="glyphicon glyphicon-time"></span>
+                                <span v-text="formatDate(message.created_at)"></span>
+                            </small>
+                            
+                            <strong class="pull-right primary-font" v-text="message.from_user.name"></strong>
+                        </div>
+
+                        <div class="header" v-else>
+                            <strong class="primary-font" v-text="message.from_user.name"></strong>
+
+                            <small class="pull-right text-muted">
+                                <span class="glyphicon glyphicon-time"></span>
+                                <span v-text="formatDate(message.created_at)"></span>
+                            </small>
+                        </div>
+
                         <p v-text="message.text"></p>
                     </div>
-                </div>
+                </li>
+            </ul>
+        </div>
 
-                <form id="chat-user-form" @submit.prevent="chat" class="form-horizontal" autocomplete="off">
-                    <div class="text-input form-inline">
-                        <input type="text" name="text" v-model="text" class="form-control" placeholder="Type your message here..." required />
-                        <button type="submit" class="btn btn-primary" :class="isSubmitting ? 'disabled' : ''">Send Message</button>
-                    </div>
-                </form>
-            </div>
+        <div class="panel-footer">
+            <form id="chat-user-form" @submit.prevent="chat" class="form-horizontal" autocomplete="off">
+                <div class="input-group">
+                    <input type="text" name="text" v-model="text" class="form-control input-md" placeholder="Type your message here..." required>
+                    
+                    <span class="input-group-btn">
+                        <button type="submit" class="btn btn-primary btn-md" :class="isSubmitting ? 'disabled' : ''">
+                            Send
+                        </button>
+                    </span>
+                </div>
+            </form>
         </div>
     </div>
 </template>
 
 <script>
+    import moment from 'moment';
+
     export default {
         props: ['toUser'],
 
@@ -32,6 +63,7 @@
                 text: '',
                 isSubmitting: false,
                 isInitialRender: false,
+                isChatInserted: false,
             };
         },
 
@@ -41,6 +73,8 @@
                     for (var i = 0; i < response.data.length; i++) {
                        this.messages.unshift(response.data[i]); 
                     }
+
+                    console.log(this.messages);
 
                     this.isInitialRender = true;
                 });
@@ -62,8 +96,12 @@
 
         updated: function () {
             if (this.isInitialRender) {
-                this.$el.querySelector("#chat-user-form").scrollIntoView();
+                this.scrollChatToBottom();
                 this.isInitialRender = false;
+            }
+            else if (this.isChatInserted) {
+                this.scrollChatToBottom();
+                this.isChatInserted = false;
             }
         },
 
@@ -78,15 +116,12 @@
                 axios.post("/api/users/" + this.toUser.id + "/messages", {text: this.text})
                     .then((response) => {
                         // handle success
-                        console.log('11');
-                        console.log(response.data.status);
-                        console.log(response.data);
-
                         if (! response.data.status) {
                             alertify.error("Can't send message! Please try again.", 10);
                             return;
                         }
 
+                        this.isChatInserted = true;
                         this.insertChat(response.data.message);
                         this.text = "";
                     })
@@ -104,24 +139,40 @@
                 }
 
                 let fromUserId = message.from_user_id;
-                let text = message.text;
                 let user = (fromUserId == this.currentUser.id ? this.currentUser : this.toUser);
 
                 this.messages.push({
                     id: message.id,
                     from_user: user,
-                    text: text,
+                    from_user_id: fromUserId,
+                    text: message.text,
+                    created_at: message.created_at,
                 });
             },
 
+            scrollChatToBottom() {
+                var panel_body = this.$el.querySelector(".panel-body");
+                
+                panel_body.scrollTop = panel_body.scrollHeight;
+            },
+
             isMessageExisting(message) {
-                for(var i = this.messages.length - 1; i >= 0; i--) {
+                for (var i = this.messages.length - 1; i >= 0; i--) {
                     if (this.messages[i].id == message.id) {
                         return true;
                     }
                 }
 
                 return false;
+            },
+
+            isMessageMine(message) {
+                return message.from_user_id == this.currentUser.id;
+            },
+
+            formatDate(date) {
+                console.log('mind');
+                return moment(String(date)).format('MMM D, YYYY h:mma');
             },
         },
     }
