@@ -4,33 +4,7 @@
 
         <div class="panel-body">
             <ul class="chat">
-                <li v-for="message in messages" v-bind:id="'message-'+message.id" class="clearfix" :class="isMessageMine(message) ? 'right' : 'left'">
-                    <span class="chat-img" :class="isMessageMine(message) ? 'pull-right' : 'pull-left'">
-                        <img src="http://placehold.it/50/FA6F57/fff&text=ME" alt="User Avatar" class="img-circle" />
-                    </span>
-                    
-                    <div class="chat-body clearfix">
-                        <div class="header" v-if="isMessageMine(message)">
-                            <small class="text-muted">
-                                <span class="glyphicon glyphicon-time"></span>
-                                <span v-text="formatDate(message.created_at)"></span>
-                            </small>
-                            
-                            <strong class="pull-right primary-font" v-text="message.from_user.name"></strong>
-                        </div>
-
-                        <div class="header" v-else>
-                            <strong class="primary-font" v-text="message.from_user.name"></strong>
-
-                            <small class="pull-right text-muted">
-                                <span class="glyphicon glyphicon-time"></span>
-                                <span v-text="formatDate(message.created_at)"></span>
-                            </small>
-                        </div>
-
-                        <p v-text="message.text"></p>
-                    </div>
-                </li>
+                <Message v-for="message in messages" v-bind:key="message.id" :message="message" />
             </ul>
         </div>
 
@@ -51,9 +25,11 @@
 </template>
 
 <script>
-    import moment from 'moment';
+    import Message from './Message';
 
     export default {
+        components: {Message},
+
         props: ['toUser'],
 
         data() {
@@ -61,43 +37,58 @@
                 currentUser: window.App.user,
                 messages: [],
                 text: '',
+                isFetchingChats: false,
                 isSubmitting: false,
                 isInitialRender: false,
                 isChatInserted: false,
+                isChatsFetched: false,
+                scrollToMessageId: 0,
+                hasMoreMessages: true,
             };
         },
 
         created() {
-            axios.get("/api/messages/" + this.toUser.id)
-                .then((response) => {
-                    for (var i = 0; i < response.data.length; i++) {
-                       this.messages.unshift(response.data[i]); 
-                    }
-
-                    console.log(this.messages);
-
-                    this.isInitialRender = true;
-                });
+            this.getChatMessages(() => {
+                this.isInitialRender = true;
+            });
 
             Echo.private('App.Message.' + this.currentUser.id + '.' + this.toUser.id)
                 .listen('ChatSent', (e) => {
-                    var message = e.message;
+                    let message = e.message;
                     
+                    this.isChatInserted = true;
                     this.insertChat(message);
                 });
 
             Echo.private('App.Message.' + this.toUser.id + '.' + this.currentUser.id)
                 .listen('ChatSent', (e) => {
-                    var message = e.message;
+                    let message = e.message;
                     
+                    this.isChatInserted = true;
                     this.insertChat(message);
                 });
+            
+            $(this.$el).tooltip({
+                selector: '[rel=tooltip]'
+            });
         },
 
         updated: function () {
             if (this.isInitialRender) {
                 this.scrollChatToBottom();
                 this.isInitialRender = false;
+                this.isChatsFetched = false;
+
+                let panel_body = this.$el.querySelector(".panel-body");
+                panel_body.addEventListener("scroll", () => {
+                    if (this.isScrollAtTop()) {
+                        this.getChatMessages();
+                    }
+                });
+            }
+            else if (this.isChatsFetched) {
+                this.isChatsFetched = false;
+                document.getElementById('message-' + this.scrollToMessageId).scrollIntoView();
             }
             else if (this.isChatInserted) {
                 this.scrollChatToBottom();
@@ -106,6 +97,44 @@
         },
 
         methods: {
+            getChatMessages(callback) {
+                if (! this.hasMoreMessages || this.isFetchingChats) {
+                    return;
+                }
+
+                var last_message_id = (this.messages.length ? this.messages[0].id  : null);
+                
+                this.isFetchingChats = true;
+
+                axios.get("/api/messages/" + this.toUser.id, {
+                    params: {
+                        last_message_id: last_message_id
+                    }
+                })
+                .then((response) => {
+                    for (let i = 0; i < response.data.messages.length; i++) {
+                        this.messages.unshift(response.data.messages[i]); 
+                    }
+
+                    if (last_message_id) {
+                        this.scrollToMessageId = last_message_id;
+                    }
+
+                    this.isChatsFetched = true;
+
+                    if (typeof callback == 'function') {
+                        callback();
+                    }
+
+                    this.hasMoreMessages = response.data.has_more_messages;
+                })
+                .catch((error) => {
+                })
+                .then(() => {
+                    this.isFetchingChats = false;
+                });
+            },
+
             chat() {
                 if (this.isSubmitting) {
                     return;
@@ -150,29 +179,26 @@
                 });
             },
 
+            isScrollAtTop() {
+                let panel_body = this.$el.querySelector(".panel-body");
+                
+                return panel_body.scrollTop == 0;
+            },
+
             scrollChatToBottom() {
-                var panel_body = this.$el.querySelector(".panel-body");
+                let panel_body = this.$el.querySelector(".panel-body");
                 
                 panel_body.scrollTop = panel_body.scrollHeight;
             },
 
             isMessageExisting(message) {
-                for (var i = this.messages.length - 1; i >= 0; i--) {
+                for (let i = this.messages.length - 1; i >= 0; i--) {
                     if (this.messages[i].id == message.id) {
                         return true;
                     }
                 }
 
                 return false;
-            },
-
-            isMessageMine(message) {
-                return message.from_user_id == this.currentUser.id;
-            },
-
-            formatDate(date) {
-                console.log('mind');
-                return moment(String(date)).format('MMM D, YYYY h:mma');
             },
         },
     }

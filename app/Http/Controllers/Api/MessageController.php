@@ -19,6 +19,7 @@ class MessageController extends Controller
      */
 	public function index(Request $request, User $toUser)
     {
+        $limit = 25;
         $currentUser = Auth::user();
 
         if ($currentUser->id == $toUser->id) {
@@ -37,16 +38,22 @@ class MessageController extends Controller
                     $query->where('from_user_id', $toUser->id);
                 });
             })
-            ->orderBy('id', 'DESC')
-            ->limit(50);
+            ->orderBy('id', 'DESC');
         
         if ($request->input('last_message_id')) {
             $query->where('id', '<', $request->input('last_message_id'));
         }
+
+        $total_messages = $query->count();
+
+        $query->limit($limit);
         
         $messages = $query->get();
 
-    	return $messages;
+    	return [
+            'has_more_messages' => $total_messages > $messages->count(),
+            'messages' => $messages,
+        ];
     }
 
     /**
